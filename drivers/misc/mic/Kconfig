@@ -21,6 +21,7 @@ config INTEL_MIC_HOST
 	depends on 64BIT && PCI && X86
 	select VHOST_RING
 	select INTEL_MIC_BUS
+	select INTEL_MIC_X100_DMA
 	default N
 	help
 	  This enables Host Driver support for the Intel Many Integrated
