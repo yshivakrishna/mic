@@ -31,6 +31,7 @@
 #include <linux/io.h>
 #include <linux/irqreturn.h>
 #include <linux/interrupt.h>
+#include <linux/mic_bus.h>
 
 /**
  * struct mic_intr_info - Contains h/w specific interrupt sources info
@@ -71,6 +72,7 @@ struct mic_device {
  * @hotplug_work: Hot plug work for adding/removing virtio devices.
  * @irq_info: The OS specific irq information
  * @intr_info: H/W specific interrupt information.
+ * @dma_mbdev: dma device on the MIC virtual bus.
  */
 struct mic_driver {
 	char name[20];
@@ -81,6 +83,7 @@ struct mic_driver {
 	struct work_struct hotplug_work;
 	struct mic_irq_info irq_info;
 	struct mic_intr_info intr_info;
+	struct mbus_device dma_mbdev;
 };
 
 /**
