@@ -110,9 +110,9 @@ static int __virtblk_add_req(struct virtqueue *vq,
 	return virtqueue_add_sgs(vq, sgs, num_out, num_in, vbr, GFP_ATOMIC);
 }
 
-static inline void virtblk_request_done(struct virtblk_req *vbr)
+static inline void virtblk_request_done(struct request *req)
 {
-	struct request *req = vbr->req;
+	struct virtblk_req *vbr = req->special;
 	int error = virtblk_result(vbr);
 
 	if (req->cmd_type == REQ_TYPE_BLOCK_PC) {
@@ -138,7 +138,7 @@ static void virtblk_done(struct virtqueue *vq)
 	do {
 		virtqueue_disable_cb(vq);
 		while ((vbr = virtqueue_get_buf(vblk->vq, &len)) != NULL) {
-			virtblk_request_done(vbr);
+			blk_mq_complete_request(vbr->req);
 			req_done = true;
 		}
 		if (unlikely(virtqueue_is_broken(vq)))
@@ -479,6 +479,7 @@ static struct blk_mq_ops virtio_mq_ops = {
 	.map_queue	= blk_mq_map_queue,
 	.alloc_hctx	= blk_mq_alloc_single_hw_queue,
 	.free_hctx	= blk_mq_free_single_hw_queue,
+	.complete	= virtblk_request_done,
 };
 
 static struct blk_mq_reg virtio_mq_reg = {
@@ -489,13 +490,14 @@ static struct blk_mq_reg virtio_mq_reg = {
 	.flags		= BLK_MQ_F_SHOULD_MERGE,
 };
 
-static void virtblk_init_vbr(void *data, struct blk_mq_hw_ctx *hctx,
+static int virtblk_init_vbr(void *data, struct blk_mq_hw_ctx *hctx,
 			     struct request *rq, unsigned int nr)
 {
 	struct virtio_blk *vblk = data;
 	struct virtblk_req *vbr = rq->special;
 
 	sg_init_table(vbr->sg, vblk->sg_elems);
+	return 0;
 }
 
 static int virtblk_probe(struct virtio_device *vdev)
